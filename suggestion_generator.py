@@ -96,6 +96,11 @@ class SuggestionGenerator:
         
         # Sort by priority and effectiveness
         suggestions = self._prioritize_suggestions(suggestions)
+        logger.info(f"Total suggestions before limiting: {len(suggestions)}")
+        
+        # Log suggestion details
+        for i, suggestion in enumerate(suggestions[:10], 1):
+            logger.info(f"Suggestion {i}: {suggestion.title} (Type: {suggestion.suggestion_type}, Priority: {suggestion.priority})")
         
         # Limit the number of suggestions to avoid overwhelming the tester
         final_suggestions = suggestions[:10]

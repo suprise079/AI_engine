@@ -3,7 +3,10 @@ import string
 import datetime
 import json
 import re
+import logging
 from typing import List, Dict, Any, Optional, Union
+
+logger = logging.getLogger(__name__)
 
 class TestDataGenerator:
     """
@@ -57,16 +60,41 @@ class TestDataGenerator:
         Returns:
             List of test data sets for the form
         """
+        logger.info(f"Generating form test data for {len(form_fields)} form fields")
         test_data_sets = []
         
         # Generate different sets of test data
-        test_data_sets.append(self._generate_valid_data(form_fields))
-        test_data_sets.append(self._generate_boundary_data(form_fields))
-        test_data_sets.append(self._generate_invalid_data(form_fields))
-        test_data_sets.append(self._generate_special_char_data(form_fields))
-        test_data_sets.append(self._generate_empty_data(form_fields))
-        test_data_sets.append(self._generate_international_data(form_fields))
+        logger.debug("Generating valid data set...")
+        valid_data = self._generate_valid_data(form_fields)
+        test_data_sets.append(valid_data)
+        logger.debug(f"Generated valid data: {len(valid_data)} fields")
         
+        logger.debug("Generating boundary data set...")
+        boundary_data = self._generate_boundary_data(form_fields)
+        test_data_sets.append(boundary_data)
+        logger.debug(f"Generated boundary data: {len(boundary_data)} fields")
+        
+        logger.debug("Generating invalid data set...")
+        invalid_data = self._generate_invalid_data(form_fields)
+        test_data_sets.append(invalid_data)
+        logger.debug(f"Generated invalid data: {len(invalid_data)} fields")
+        
+        logger.debug("Generating special character data set...")
+        special_char_data = self._generate_special_char_data(form_fields)
+        test_data_sets.append(special_char_data)
+        logger.debug(f"Generated special character data: {len(special_char_data)} fields")
+        
+        logger.debug("Generating empty data set...")
+        empty_data = self._generate_empty_data(form_fields)
+        test_data_sets.append(empty_data)
+        logger.debug(f"Generated empty data: {len(empty_data)} fields")
+        
+        logger.debug("Generating international data set...")
+        international_data = self._generate_international_data(form_fields)
+        test_data_sets.append(international_data)
+        logger.debug(f"Generated international data: {len(international_data)} fields")
+        
+        logger.info(f"Generated {len(test_data_sets)} test data sets for form with {len(form_fields)} fields")
         return test_data_sets
     
     def generate_test_scenario(self, scenario_type: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -80,19 +108,33 @@ class TestDataGenerator:
         Returns:
             Complete test scenario with all necessary data
         """
-        if scenario_type == 'checkout':
-            return self._generate_checkout_scenario(context)
-        elif scenario_type == 'registration':
-            return self._generate_registration_scenario(context)
-        elif scenario_type == 'login':
-            return self._generate_login_scenario(context)
-        elif scenario_type == 'payment':
-            return self._generate_payment_scenario(context)
-        elif scenario_type == 'search':
-            return self._generate_search_scenario(context)
-        else:
-            # Default to a generic scenario
-            return self._generate_generic_scenario(scenario_type, context)
+        logger.info(f"Generating test scenario: {scenario_type}")
+        if context:
+            logger.debug(f"Context provided: {list(context.keys())}")
+        
+        try:
+            if scenario_type == 'checkout':
+                scenario = self._generate_checkout_scenario(context)
+            elif scenario_type == 'registration':
+                scenario = self._generate_registration_scenario(context)
+            elif scenario_type == 'login':
+                scenario = self._generate_login_scenario(context)
+            elif scenario_type == 'payment':
+                scenario = self._generate_payment_scenario(context)
+            elif scenario_type == 'search':
+                scenario = self._generate_search_scenario(context)
+            else:
+                # Default to a generic scenario
+                logger.debug(f"Using generic scenario generator for type: {scenario_type}")
+                scenario = self._generate_generic_scenario(scenario_type, context)
+            
+            scenario_name = scenario.get('name', 'Unnamed')
+            steps_count = len(scenario.get('steps', []))
+            logger.info(f"Generated test scenario: {scenario_name} with {steps_count} steps")
+            return scenario
+        except Exception as e:
+            logger.error(f"Error generating test scenario {scenario_type}: {str(e)}", exc_info=True)
+            raise
     
     def generate_test_script(self, scenario: Dict[str, Any]) -> str:
         """
@@ -104,7 +146,12 @@ class TestDataGenerator:
         Returns:
             A formatted test script as a string
         """
-        script = f"# Test Script: {scenario.get('name', 'Untitled Test')}\n\n"
+        scenario_name = scenario.get('name', 'Untitled Test')
+        logger.info(f"Generating test script for scenario: {scenario_name}")
+        steps_count = len(scenario.get('steps', []))
+        logger.debug(f"Scenario has {steps_count} steps")
+        
+        script = f"# Test Script: {scenario_name}\n\n"
         
         # Add description
         if 'description' in scenario:
@@ -135,6 +182,8 @@ class TestDataGenerator:
                 script += f"{idx}. {result}\n"
             script += "\n"
         
+        script_lines = len(script.split('\n'))
+        logger.info(f"Generated test script: {script_lines} lines for scenario: {scenario_name}")
         return script
     
     def _generate_valid_data(self, form_fields: List[Dict[str, Any]]) -> Dict[str, Any]:

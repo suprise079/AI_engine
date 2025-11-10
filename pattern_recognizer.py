@@ -45,7 +45,12 @@ class PatternRecognizer:
     def find_patterns(self, action_sequence):
         """Analyze action sequence to find patterns."""
         if not action_sequence or not action_sequence.actions:
+            logger.warning("Empty action sequence provided for pattern detection")
             return {}
+        
+        action_count = len(action_sequence.actions)
+        session_id = action_sequence.session_id
+        logger.info(f"Analyzing {action_count} actions for session {session_id} to detect patterns")
         
         # Define pattern detector methods
         pattern_detectors = {
@@ -63,12 +68,23 @@ class PatternRecognizer:
         # Call each pattern detector method
         for pattern_name, detector_method in pattern_detectors.items():
             try:
+                logger.debug(f"Detecting {pattern_name} patterns...")
                 pattern_result = detector_method(action_sequence)
                 if pattern_result:
+                    # Log pattern detection results
+                    if isinstance(pattern_result, list):
+                        logger.info(f"Detected {pattern_name}: {len(pattern_result)} instances")
+                    elif isinstance(pattern_result, dict):
+                        logger.info(f"Detected {pattern_name}: {len(pattern_result)} items")
+                    else:
+                        logger.info(f"Detected {pattern_name}: {pattern_result}")
                     results[pattern_name] = pattern_result
+                else:
+                    logger.debug(f"No {pattern_name} patterns detected")
             except Exception as e:
-                logger.error(f"Error detecting {pattern_name} patterns: {str(e)}")
-                
+                logger.error(f"Error detecting {pattern_name} patterns: {str(e)}", exc_info=True)
+        
+        logger.info(f"Pattern detection complete. Found {len(results)} pattern types: {list(results.keys())}")
         return results
 
     def _parse_timestamp(self, timestamp_str):

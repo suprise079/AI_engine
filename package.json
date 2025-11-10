@@ -1,0 +1,33 @@
+{
+  "name": "hydra-ai-engine",
+  "version": "1.0.0",
+  "description": "A Flask-based Python microservice that provides AI-powered capabilities for test analysis, pattern recognition, and test generation",
+  "main": "app.py",
+  "scripts": {
+    "start": "python app.py",
+    "dev": "python app.py",
+    "test": "pytest",
+    "lint": "pylint *.py",
+    "format": "black *.py",
+    "install-deps": "pip install -r requirements.txt"
+  },
+  "keywords": [
+    "hydra",
+    "ai",
+    "test-automation",
+    "pattern-recognition",
+    "flask",
+    "microservice"
+  ],
+  "author": "QOT Systems",
+  "license": "UNLICENSED",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  }
+}

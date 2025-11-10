@@ -75,10 +75,24 @@ class TestScriptGenerator:
         Returns:
             The generated test script as a string
         """
+        test_name = test_case.get("name", "Unknown Test")
+        logger.info(f"Generating {framework} script for test case: {test_name}")
+        logger.debug(f"Test case details: {test_case.get('description', 'No description')}")
+        logger.debug(f"Test case has {len(test_case.get('steps', []))} steps")
+        logger.debug(f"Test data provided: {len(test_data) if test_data else 0} items")
+        
         if framework not in self.generators:
+            logger.error(f"Unsupported framework: {framework}. Supported frameworks: {list(self.generators.keys())}")
             raise ValueError(f"Unsupported framework: {framework}")
-            
-        return self.generators[framework](test_case, test_data)
+        
+        try:
+            script = self.generators[framework](test_case, test_data)
+            script_lines = len(script.split('\n'))
+            logger.info(f"Successfully generated {framework} script: {script_lines} lines for test case: {test_name}")
+            return script
+        except Exception as e:
+            logger.error(f"Error generating {framework} script for test case {test_name}: {str(e)}", exc_info=True)
+            raise
     
     def _generate_selenium_script(self, test_case, test_data):
         """

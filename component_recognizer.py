@@ -87,6 +87,7 @@ class ComponentRecognizer:
     
     def identify_pages_and_components(self, actions):
         """Main method to identify pages and their components."""
+        logger.info(f"Starting page and component identification for {len(actions)} actions")
         pages = []
         current_page = None
         page_actions = []
@@ -114,7 +115,17 @@ class ComponentRecognizer:
             pages.append(current_page)
         
         # Second pass: refine component identification
+        logger.info(f"Identified {len(pages)} pages before refinement")
         refined_pages = self._refine_page_components(pages)
+        
+        # Log final results
+        total_components = sum(len(page.get("components", [])) for page in refined_pages)
+        logger.info(f"Final result: {len(refined_pages)} pages with {total_components} total components")
+        for i, page in enumerate(refined_pages, 1):
+            components = page.get("components", [])
+            logger.info(f"Page {i}: {page.get('pageName', 'Unknown')} ({page.get('pageType', 'GENERIC')}) - {len(components)} components")
+            for j, component in enumerate(components[:5], 1):  # Log first 5 components
+                logger.debug(f"  Component {j}: {component.get('name', 'Unknown')} ({component.get('componentType', 'unknown')})")
         
         return refined_pages
     

@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import logging
 import os
-import json
 import datetime
 from pattern_recognizer import PatternRecognizer
 from suggestion_generator import SuggestionGenerator
@@ -10,13 +9,27 @@ from component_recognizer import ComponentRecognizer
 from test_case_generator import TestCaseGenerator
 from test_script_generator import TestScriptGenerator
 from models import ActionSequence, TestSuggestion
+from config import get_config, Config
 
-logging.basicConfig(level=logging.INFO, 
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# Initialize logger
 logger = logging.getLogger(__name__)
 
+# Create Flask app
 app = Flask(__name__)
-CORS(app)
+
+# Load configuration
+config_class = get_config()
+app.config.from_object(config_class)
+config_class.init_app(app)
+
+# Configure CORS
+cors = CORS(
+    app,
+    origins=config_class.CORS_ORIGINS,
+    supports_credentials=config_class.CORS_CREDENTIALS,
+    methods=config_class.CORS_METHODS,
+    allow_headers=config_class.CORS_HEADERS
+)
 
 # Initialize AI components
 pattern_recognizer = PatternRecognizer()
@@ -24,6 +37,82 @@ suggestion_generator = SuggestionGenerator()
 component_recognizer = ComponentRecognizer()
 test_case_generator = TestCaseGenerator()
 test_script_generator = TestScriptGenerator()
+
+# Request logging middleware
+@app.before_request
+def log_request_info():
+    """Log incoming request information."""
+    logger.debug(f"Request: {request.method} {request.path}")
+    if request.is_json:
+        logger.debug(f"Request body size: {len(str(request.json))} bytes")
+
+
+@app.after_request
+def log_response_info(response):
+    """Log outgoing response information."""
+    logger.debug(f"Response: {response.status_code} for {request.method} {request.path}")
+    return response
+
+
+# Global error handlers
+@app.errorhandler(400)
+def bad_request(error):
+    """Handle 400 Bad Request errors."""
+    logger.warning(f"Bad request: {str(error)}")
+    return jsonify({
+        "error": "Bad Request",
+        "message": str(error) if str(error) else "Invalid request format"
+    }), 400
+
+
+@app.errorhandler(404)
+def not_found(error):
+    """Handle 404 Not Found errors."""
+    logger.warning(f"Not found: {request.path}")
+    return jsonify({
+        "error": "Not Found",
+        "message": f"The requested endpoint '{request.path}' was not found"
+    }), 404
+
+
+@app.errorhandler(405)
+def method_not_allowed(error):
+    """Handle 405 Method Not Allowed errors."""
+    logger.warning(f"Method not allowed: {request.method} {request.path}")
+    return jsonify({
+        "error": "Method Not Allowed",
+        "message": f"Method '{request.method}' is not allowed for this endpoint"
+    }), 405
+
+
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    """Handle 413 Request Entity Too Large errors."""
+    logger.warning(f"Request too large: {request.path}")
+    return jsonify({
+        "error": "Request Entity Too Large",
+        "message": "The request payload exceeds the maximum allowed size"
+    }), 413
+
+
+@app.errorhandler(500)
+def internal_error(error):
+    """Handle 500 Internal Server Error."""
+    logger.error(f"Internal server error: {str(error)}", exc_info=True)
+    return jsonify({
+        "error": "Internal Server Error",
+        "message": "An unexpected error occurred. Please try again later."
+    }), 500
+
+
+@app.errorhandler(Exception)
+def handle_exception(error):
+    """Handle all unhandled exceptions."""
+    logger.error(f"Unhandled exception: {str(error)}", exc_info=True)
+    return jsonify({
+        "error": "Internal Server Error",
+        "message": "An unexpected error occurred. Please try again later."
+    }), 500
 
 def validate_timestamp(action):
     """Validate and fix timestamps in action objects"""
@@ -88,7 +177,38 @@ def validate_timestamp(action):
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    return jsonify({"status": "healthy"}), 200
+    """
+    Health check endpoint.
+    Returns the health status of the AI Engine service.
+    
+    Returns:
+        JSON response with status information
+    """
+    try:
+        # Check if AI components are initialized
+        components_status = {
+            "pattern_recognizer": pattern_recognizer is not None,
+            "suggestion_generator": suggestion_generator is not None,
+            "component_recognizer": component_recognizer is not None,
+            "test_case_generator": test_case_generator is not None,
+            "test_script_generator": test_script_generator is not None
+        }
+        
+        all_healthy = all(components_status.values())
+        
+        return jsonify({
+            "status": "healthy" if all_healthy else "degraded",
+            "version": Config.APP_VERSION,
+            "components": components_status,
+            "timestamp": datetime.datetime.now().isoformat()
+        }), 200 if all_healthy else 503
+    except Exception as e:
+        logger.error(f"Health check failed: {str(e)}", exc_info=True)
+        return jsonify({
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": datetime.datetime.now().isoformat()
+        }), 503
 
 @app.route('/analyze', methods=['POST'])
 def analyze_actions():
@@ -139,9 +259,18 @@ def analyze_actions():
             "suggestions": [s.to_dict() for s in suggestions]
         }), 200
         
+    except ValueError as e:
+        logger.warning(f"Validation error in analyze_actions: {str(e)}")
+        return jsonify({
+            "error": "Validation Error",
+            "message": str(e)
+        }), 400
     except Exception as e:
         logger.error(f"Error analyzing actions: {str(e)}", exc_info=True)
-        return jsonify({"error": f"Error analyzing actions: {str(e)}"}), 500
+        return jsonify({
+            "error": "Internal Server Error",
+            "message": "An error occurred while analyzing actions"
+        }), 500
 
 
 @app.route('/feedback', methods=['POST'])
@@ -167,9 +296,18 @@ def process_feedback():
         
         return jsonify({"status": "success"}), 200
         
+    except ValueError as e:
+        logger.warning(f"Validation error in process_feedback: {str(e)}")
+        return jsonify({
+            "error": "Validation Error",
+            "message": str(e)
+        }), 400
     except Exception as e:
         logger.error(f"Error processing feedback: {str(e)}", exc_info=True)
-        return jsonify({"error": f"Error processing feedback: {str(e)}"}), 500
+        return jsonify({
+            "error": "Internal Server Error",
+            "message": "An error occurred while processing feedback"
+        }), 500
 
 @app.route('/detect-pages', methods=['POST'])
 def detect_pages():
@@ -210,9 +348,18 @@ def detect_pages():
             "pages": pages
         }), 200
         
+    except ValueError as e:
+        logger.warning(f"Validation error in detect_pages: {str(e)}")
+        return jsonify({
+            "error": "Validation Error",
+            "message": str(e)
+        }), 400
     except Exception as e:
         logger.error(f"Error detecting pages: {str(e)}", exc_info=True)
-        return jsonify({"error": f"Error detecting pages: {str(e)}"}), 500
+        return jsonify({
+            "error": "Internal Server Error",
+            "message": "An error occurred while detecting pages"
+        }), 500
 
 @app.route('/generate-test-cases', methods=['POST'])
 def generate_test_cases():
@@ -244,9 +391,18 @@ def generate_test_cases():
             "testCases": test_cases
         }), 200
         
+    except ValueError as e:
+        logger.warning(f"Validation error in generate_test_cases: {str(e)}")
+        return jsonify({
+            "error": "Validation Error",
+            "message": str(e)
+        }), 400
     except Exception as e:
         logger.error(f"Error generating test cases: {str(e)}", exc_info=True)
-        return jsonify({"error": f"Error generating test cases: {str(e)}"}), 500
+        return jsonify({
+            "error": "Internal Server Error",
+            "message": "An error occurred while generating test cases"
+        }), 500
 
 @app.route('/generate-script', methods=['POST'])
 def generate_script():
@@ -283,10 +439,30 @@ def generate_script():
             "framework": framework
         }), 200
         
+    except ValueError as e:
+        logger.warning(f"Validation error in generate_script: {str(e)}")
+        return jsonify({
+            "error": "Validation Error",
+            "message": str(e)
+        }), 400
     except Exception as e:
         logger.error(f"Error generating script: {str(e)}", exc_info=True)
-        return jsonify({"error": f"Error generating script: {str(e)}"}), 500
+        return jsonify({
+            "error": "Internal Server Error",
+            "message": "An error occurred while generating script"
+        }), 500
+
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    """Run the Flask application."""
+    logger.info(f"Starting {Config.APP_NAME} v{Config.APP_VERSION}")
+    logger.info(f"Environment: {os.getenv('FLASK_ENV', 'development')}")
+    logger.info(f"Debug mode: {Config.DEBUG}")
+    logger.info(f"Log level: {Config.LOG_LEVEL}")
+    logger.info(f"Server starting on {Config.HOST}:{Config.PORT}")
+    
+    app.run(
+        host=Config.HOST,
+        port=Config.PORT,
+        debug=Config.DEBUG
+    )

@@ -33,23 +33,32 @@ class TestCaseGenerator:
     
     def generate_test_cases(self, pages, recorded_actions):
         """Generate test cases from pages and recorded actions."""
+        logger.info(f"Generating test cases from {len(pages)} pages and {len(recorded_actions) if recorded_actions else 0} recorded actions")
         test_cases = []
         
         # Generate page-based test cases
         for page in pages:
             page_type = page.get("pageType", "GENERIC")
+            page_name = page.get("pageName", "Unknown")
+            logger.info(f"Processing page: {page_name} (Type: {page_type})")
             
             # Get generator for this page type
             generator = self.test_case_patterns.get(page_type, self._generate_generic_test_cases)
             
             # Generate test cases for this page
             page_test_cases = generator(page, pages, recorded_actions)
+            logger.info(f"Generated {len(page_test_cases)} test cases for page: {page_name}")
+            for i, tc in enumerate(page_test_cases, 1):
+                logger.debug(f"  Test case {i}: {tc.get('name', 'Unnamed')} ({tc.get('category', 'Unknown')}, Priority: {tc.get('priority', 'MEDIUM')})")
             test_cases.extend(page_test_cases)
         
         # Generate cross-page test cases
+        logger.info("Generating cross-page user flow test cases")
         flow_test_cases = self._generate_user_flow_test_cases(pages, recorded_actions)
+        logger.info(f"Generated {len(flow_test_cases)} user flow test cases")
         test_cases.extend(flow_test_cases)
         
+        logger.info(f"Total test cases generated: {len(test_cases)}")
         return test_cases
     
     def _generate_login_test_cases(self, page, all_pages, recorded_actions):
