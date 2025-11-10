@@ -16,7 +16,7 @@ class Config:
     
     # Server settings
     HOST = os.getenv('HOST', '0.0.0.0')
-    PORT = int(os.getenv('PORT', 5000))
+    PORT = int(os.getenv('PORT', 3002))
     DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
     
     # Logging configuration
@@ -27,7 +27,7 @@ class Config:
     # CORS configuration
     CORS_ORIGINS: List[str] = os.getenv(
         'CORS_ORIGINS',
-        'http://localhost:3000,http://localhost:8080,http://127.0.0.1:3000,http://127.0.0.1:8080'
+        'http://*.qotsystems.co.za'
     ).split(',')
     CORS_CREDENTIALS = os.getenv('CORS_CREDENTIALS', 'True').lower() == 'true'
     CORS_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
@@ -42,7 +42,7 @@ class Config:
     MAX_CONTENT_LENGTH = int(os.getenv('MAX_CONTENT_LENGTH', 16777216))  # 16MB
     
     # Timeout settings
-    REQUEST_TIMEOUT = int(os.getenv('REQUEST_TIMEOUT', 300))  # 5 minutes
+    REQUEST_TIMEOUT = int(os.getenv('REQUEST_TIMEOUT', 200))  # 2 minutes
     
     @staticmethod
     def init_app(app):
@@ -75,7 +75,7 @@ class ProductionConfig(Config):
     # Production-specific CORS origins (should be set via env vars)
     CORS_ORIGINS: List[str] = os.getenv(
         'CORS_ORIGINS',
-        'https://localhost:3000,https://localhost:8080'
+        'https://*.qotsystems.co.za'
     ).split(',')
 
 

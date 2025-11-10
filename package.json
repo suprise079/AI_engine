@@ -4,8 +4,9 @@
   "description": "A Flask-based Python microservice that provides AI-powered capabilities for test analysis, pattern recognition, and test generation",
   "main": "app.py",
   "scripts": {
-    "start": "python app.py",
-    "dev": "python app.py",
+    "prod": "python app.py --config=production",
+    "start": "python app.py --config=qa",
+    "dev": "python app.py --config=development",
     "test": "pytest",
     "lint": "pylint *.py",
     "format": "black *.py",
