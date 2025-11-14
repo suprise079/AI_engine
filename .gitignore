@@ -1,4 +1,4 @@
-# Python
+# Python (legacy - kept for reference)
 __pycache__/
 *.py[cod]
 *$py.class
@@ -6,7 +6,6 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
@@ -26,6 +25,18 @@ env/
 ENV/
 env.bak/
 venv.bak/
+
+# Node.js / TypeScript
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# TypeScript build output
+dist/
+*.tsbuildinfo
 
 # IDE
 .vscode/
@@ -49,16 +60,14 @@ logs/
 .coverage
 htmlcov/
 .tox/
+coverage/
+.nyc_output/
 
 # Jupyter Notebook
 .ipynb_checkpoints
-
-# Node modules (if any)
-node_modules/
 
 # Docker
 .dockerignore
 
 # OS
 Thumbs.db
-

@@ -1,29 +1,29 @@
-# Use Python 3.11 slim image
-FROM python:3.11-slim
+# Use Node.js 18 LTS image
+FROM node:18-slim
 
 # Set working directory
 WORKDIR /app
 
 # Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    FLASK_ENV=production \
+ENV NODE_ENV=production \
     PORT=3002
 
-# Install system dependencies
+# Install system dependencies (Ollama will be installed separately or assumed available on host)
 RUN apt-get update && apt-get install -y \
-    gcc \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
-COPY requirements.txt .
+# Copy package files
+COPY package*.json ./
 
-# Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# Install Node.js dependencies
+RUN npm ci --only=production
 
 # Copy application code
 COPY . .
+
+# Build TypeScript
+RUN npm run build
 
 # Create non-root user for security
 RUN useradd -m -u 1000 appuser && \
@@ -37,8 +37,7 @@ EXPOSE 3002
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:3002/health')" || exit 1
+    CMD node -e "require('http').get('http://localhost:3002/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" || exit 1
 
-# Run the application with Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:3002", "--workers", "4", "--timeout", "300", "--access-logfile", "-", "--error-logfile", "-", "app:app"]
-
+# Run the application
+CMD ["node", "dist/app.js"]

@@ -1,20 +1,33 @@
 # Hydra AI Engine
 
-A Flask-based Python microservice that provides AI-powered capabilities for test analysis, pattern recognition, and test generation. This service integrates with the Hydra Backend to provide intelligent test suggestions and automation.
+A Node.js/Express TypeScript microservice that provides AI-powered capabilities for test analysis and test generation using DeepSeek via Ollama. This service integrates with the Hydra Backend to provide intelligent test suggestions and automation.
 
 ## Features
 
-- **Action Analysis**: Analyzes test action sequences and generates intelligent suggestions
-- **Pattern Recognition**: Identifies patterns in test actions for optimization
+- **Action Analysis**: Analyzes test action sequences and generates intelligent suggestions using DeepSeek AI
 - **Component Detection**: Detects pages and components from action sequences
 - **Test Case Generation**: Generates test cases from detected pages and actions
-- **Test Script Generation**: Creates executable test scripts in various frameworks (Selenium, etc.)
+- **Test Script Generation**: Creates executable test scripts in various frameworks (Selenium, Cypress, Playwright)
 - **Feedback Processing**: Processes user feedback to improve AI models
+- **Chat API**: Direct API endpoint for testing Ollama/DeepSeek integration
 
 ## Requirements
 
-- Python 3.8+
-- pip
+- Node.js 18+ 
+- npm 9+
+- Ollama installed and running with `deepseek-coder` model
+
+### Installing Ollama and DeepSeek Model
+
+1. Install Ollama from https://ollama.ai
+2. Pull the deepseek-coder model:
+   ```bash
+   ollama pull deepseek-coder
+   ```
+3. Verify installation:
+   ```bash
+   ollama run deepseek-coder "Hello, test"
+   ```
 
 ## Installation
 
@@ -23,46 +36,46 @@ A Flask-based Python microservice that provides AI-powered capabilities for test
 cd ai_engine
 ```
 
-2. Create a virtual environment (recommended):
+2. Install dependencies:
 ```bash
-python -m venv venv
+npm install
 ```
 
-3. Activate the virtual environment:
-   - Windows: `venv\Scripts\activate`
-   - Linux/Mac: `source venv/bin/activate`
-
-4. Install dependencies:
+3. Build the TypeScript code:
 ```bash
-pip install -r requirements.txt
+npm run build
 ```
 
 ## Configuration
 
-The application uses environment-based configuration. You can configure the service using environment variables or by creating a `.env` file (see `.env.example` for reference).
+The application uses environment-based configuration. You can configure the service using environment variables or by creating a `.env` file.
 
 ### Environment Variables
 
-- `FLASK_ENV`: Environment mode (development, production, qa) - Default: `development`
-- `PORT`: Server port - Default: `5000`
+- `NODE_ENV`: Environment mode (development, production, qa) - Default: `development`
+- `PORT`: Server port - Default: `3002`
 - `HOST`: Server host - Default: `0.0.0.0`
-- `DEBUG`: Enable debug mode - Default: `False`
+- `DEBUG`: Enable debug mode - Default: `false`
 - `LOG_LEVEL`: Logging level (DEBUG, INFO, WARNING, ERROR) - Default: `INFO`
 - `CORS_ORIGINS`: Comma-separated list of allowed CORS origins
-- `CORS_CREDENTIALS`: Enable CORS credentials - Default: `True`
+- `CORS_CREDENTIALS`: Enable CORS credentials - Default: `true`
 - `MAX_CONTENT_LENGTH`: Maximum request size in bytes - Default: `16777216` (16MB)
-- `REQUEST_TIMEOUT`: Request timeout in seconds - Default: `300` (5 minutes)
+- `REQUEST_TIMEOUT`: Request timeout in seconds - Default: `200` (200 seconds)
+- `OLLAMA_MODEL`: Ollama model name - Default: `deepseek-coder`
+- `OLLAMA_TIMEOUT`: Ollama query timeout in milliseconds - Default: `60000` (60 seconds)
 
 ### Example .env file
 
 ```env
-FLASK_ENV=development
-PORT=5000
+NODE_ENV=development
+PORT=3002
 HOST=0.0.0.0
-DEBUG=False
+DEBUG=false
 LOG_LEVEL=INFO
 CORS_ORIGINS=http://localhost:3000,http://localhost:8080
-CORS_CREDENTIALS=True
+CORS_CREDENTIALS=true
+OLLAMA_MODEL=deepseek-coder
+OLLAMA_TIMEOUT=60000
 ```
 
 ## Running the Application
@@ -70,19 +83,21 @@ CORS_CREDENTIALS=True
 ### Development Mode
 
 ```bash
-python app.py
+npm run dev
 ```
 
-Or using Flask directly:
-```bash
-flask run
-```
+This uses `ts-node-dev` for hot-reloading during development.
 
 ### Production Mode
 
-Using Gunicorn (recommended for production):
 ```bash
-gunicorn -w 4 -b 0.0.0.0:5000 app:app
+npm run build
+npm start
+```
+
+Or using the production script:
+```bash
+npm run prod
 ```
 
 ## Docker Deployment
@@ -96,12 +111,15 @@ docker build -t hydra-ai-engine:latest .
 ### Run Docker Container
 
 ```bash
-docker run -d -p 5000:5000 --name hydra-ai-engine \
-  -e FLASK_ENV=production \
-  -e PORT=5000 \
+docker run -d -p 3002:3002 --name hydra-ai-engine \
+  -e NODE_ENV=production \
+  -e PORT=3002 \
   -e LOG_LEVEL=INFO \
+  -e OLLAMA_MODEL=deepseek-coder \
   hydra-ai-engine:latest
 ```
+
+**Note**: The Docker container assumes Ollama is available on the host machine or in a linked container. For production deployments, you may need to configure Ollama separately.
 
 ## API Endpoints
 
@@ -112,7 +130,7 @@ docker run -d -p 5000:5000 --name hydra-ai-engine \
 
 ### Action Analysis
 - **POST** `/analyze`
-  - Analyzes a sequence of test actions and generates suggestions
+  - Analyzes a sequence of test actions and generates suggestions using DeepSeek AI
   - Request body: `{"sessionId": 123, "actions": [...]}`
   - Response: `{"sessionId": 123, "suggestions": [...]}`
 
@@ -140,13 +158,26 @@ docker run -d -p 5000:5000 --name hydra-ai-engine \
   - Request body: `{"testCase": {...}, "framework": "selenium", "testData": {...}}`
   - Response: `{"script": "...", "language": "java", "framework": "selenium"}`
 
+### Chat API (Testing)
+- **POST** `/chat`
+  - Direct endpoint for testing Ollama/DeepSeek integration
+  - Request body: `{"prompt": "Your question or prompt here"}`
+  - Response: `{"response": "AI generated response"}`
+  - Example:
+    ```bash
+    curl -X POST http://localhost:3002/chat \
+      -H "Content-Type: application/json" \
+      -d '{"prompt": "Write a hello world program in Python"}'
+    ```
+  - Also available at `/api/chat` for backwards compatibility
+
 ## Backend Integration
 
 The AI Engine integrates with the Hydra Backend through the `AiEngineService`. The backend configuration should include:
 
 ```properties
 # Backend application.properties
-ai-engine.url=http://localhost:5000
+ai-engine.url=http://localhost:3002
 ai-engine.timeout=30000
 ```
 
@@ -158,13 +189,13 @@ Add the following to your backend properties files:
 - `application-prod.properties`
 
 ```properties
-ai-engine.url=http://localhost:5000
+ai-engine.url=http://localhost:3002
 ai-engine.timeout=30000
 ```
 
 For production, update the URL to match your deployment:
 ```properties
-ai-engine.url=http://ai-engine-service:5000
+ai-engine.url=http://ai-engine-service:3002
 ai-engine.timeout=30000
 ```
 
@@ -172,26 +203,33 @@ ai-engine.timeout=30000
 
 ```
 ai_engine/
-├── app.py                      # Main Flask application
-├── config.py                   # Configuration management
-├── models.py                   # Data models
-├── pattern_recognizer.py       # Pattern recognition logic
-├── suggestion_generator.py     # Suggestion generation
-├── component_recognizer.py      # Component detection
-├── test_case_generator.py      # Test case generation
-├── test_script_generator.py    # Test script generation
-├── test_data_generator.py      # Test data generation
-├── requirements.txt             # Python dependencies
-├── Dockerfile                  # Docker configuration
-├── .dockerignore               # Docker ignore file
-├── .gitignore                  # Git ignore file
-├── README.md                   # This file
-└── __init__.py                 # Package initialization
+├── src/
+│   ├── app.ts                      # Main Express application
+│   ├── config/
+│   │   ├── config.ts               # Configuration management
+│   │   └── logger.ts               # Winston logger setup
+│   ├── models/
+│   │   └── index.ts                # Data models
+│   ├── services/
+│   │   ├── ollama-service.ts       # Ollama/DeepSeek integration
+│   │   ├── suggestion-generator.ts # AI-powered suggestion generation
+│   │   ├── component-recognizer.ts # Component detection
+│   │   ├── test-case-generator.ts  # Test case generation
+│   │   └── test-script-generator.ts # Test script generation
+│   └── types/
+│       └── index.ts                # TypeScript type definitions
+├── dist/                           # Compiled JavaScript (generated)
+├── package.json                     # Node.js dependencies
+├── tsconfig.json                    # TypeScript configuration
+├── Dockerfile                       # Docker configuration
+├── .dockerignore                    # Docker ignore file
+├── .gitignore                       # Git ignore file
+└── README.md                        # This file
 ```
 
 ## Logging
 
-The application uses Python's standard logging module with configurable levels:
+The application uses Winston for logging with configurable levels:
 - `DEBUG`: Detailed information for debugging
 - `INFO`: General informational messages
 - `WARNING`: Warning messages
@@ -216,12 +254,55 @@ All errors return JSON responses with error details (without exposing internal d
 
 ```bash
 # Add test files and run
-pytest
+npm test
 ```
 
 ### Code Style
 
-Follow PEP 8 Python style guide.
+Follow TypeScript/ESLint style guide. Run linting:
+
+```bash
+npm run lint
+```
+
+Format code:
+
+```bash
+npm run format
+```
+
+## AI Model Integration
+
+The service uses DeepSeek Coder via Ollama for intelligent analysis. The AI analyzes action sequences and identifies:
+
+- Security vulnerabilities
+- Performance issues
+- Accessibility problems
+- Usability concerns
+- Edge cases
+- Validation gaps
+- Error handling issues
+- Data integrity concerns
+
+## Troubleshooting
+
+### Ollama Not Found
+If you get errors about Ollama not being found:
+1. Ensure Ollama is installed and in your PATH
+2. Verify with: `ollama --version`
+3. Check that the model is pulled: `ollama list`
+
+### Model Not Available
+If DeepSeek model is not available:
+```bash
+ollama pull deepseek-coder
+```
+
+### Port Already in Use
+Change the port using environment variable:
+```bash
+PORT=3003 npm start
+```
 
 ## License
 
@@ -230,4 +311,3 @@ Copyright (c) QOT Systems. All rights reserved.
 ## Support
 
 For issues and questions, please contact the Hydra development team.
-
