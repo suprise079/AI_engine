@@ -71,6 +71,16 @@ export class OllamaService {
         throw new Error(`Ollama query timeout after ${this.timeout}ms`);
       }
       
+      // Handle connection errors with helpful messages
+      if (error.cause?.code === 'ECONNREFUSED') {
+        const helpfulMessage = `Cannot connect to Ollama at ${this.ollamaUrl}. ` +
+          `If running in Docker, ensure Ollama is accessible. ` +
+          `For Docker Desktop, use OLLAMA_URL=http://host.docker.internal:11434. ` +
+          `For Linux, use the host's IP address or run Ollama in a separate container.`;
+        logger.default.error(`Ollama connection refused: ${helpfulMessage}`);
+        throw new Error(helpfulMessage);
+      }
+      
       if (error.message) {
         logger.default.error(`Ollama API error: ${error.message}`);
         throw error;
