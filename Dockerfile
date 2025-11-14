@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y \
 COPY package*.json ./
 
 # Install Node.js dependencies
-RUN npm install
+RUN npm ci --only=production
 
 # Copy application code
 COPY . .
