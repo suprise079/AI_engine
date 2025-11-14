@@ -31,11 +31,14 @@ ENV NODE_ENV=production
 RUN npm prune --omit=dev
 
 # Create non-root user for security
-RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+# Change ownership
+RUN chown -R nodejs:nodejs /app
 
 # Switch to non-root user
-USER appuser
+USER nodejs
 
 # Expose port
 EXPOSE 3006
