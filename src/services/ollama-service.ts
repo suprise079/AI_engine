@@ -9,7 +9,7 @@ export class OllamaService {
   private modelName: string;
   private timeout: number;
 
-  constructor(modelName: string = 'deepseek-coder', timeout: number = 60000) {
+  constructor(modelName: string = 'llama3.1', timeout: number = 60000) {
     this.modelName = modelName;
     this.timeout = timeout;
   }

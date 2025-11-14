@@ -44,7 +44,7 @@ class BaseConfig implements Config {
   CORS_HEADERS = ['Content-Type', 'Authorization'];
   MAX_CONTENT_LENGTH = parseInt(process.env.MAX_CONTENT_LENGTH || '16777216', 10); // 16MB
   REQUEST_TIMEOUT = parseInt(process.env.REQUEST_TIMEOUT || '200', 10); // 200 seconds
-  OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'deepseek-coder';
+  OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.1';
   OLLAMA_TIMEOUT = parseInt(process.env.OLLAMA_TIMEOUT || '60000', 10); // 60 seconds
 }
 
