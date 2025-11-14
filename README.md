@@ -53,7 +53,7 @@ The application uses environment-based configuration. You can configure the serv
 ### Environment Variables
 
 - `NODE_ENV`: Environment mode (development, production, qa) - Default: `development`
-- `PORT`: Server port - Default: `3002`
+- `PORT`: Server port - Default: `3006`
 - `HOST`: Server host - Default: `0.0.0.0`
 - `DEBUG`: Enable debug mode - Default: `false`
 - `LOG_LEVEL`: Logging level (DEBUG, INFO, WARNING, ERROR) - Default: `INFO`
@@ -68,7 +68,7 @@ The application uses environment-based configuration. You can configure the serv
 
 ```env
 NODE_ENV=development
-PORT=3002
+PORT=3006
 HOST=0.0.0.0
 DEBUG=false
 LOG_LEVEL=INFO
@@ -111,9 +111,9 @@ docker build -t hydra-ai-engine:latest .
 ### Run Docker Container
 
 ```bash
-docker run -d -p 3002:3002 --name hydra-ai-engine \
+docker run -d -p 3006:3006 --name hydra-ai-engine \
   -e NODE_ENV=production \
-  -e PORT=3002 \
+  -e PORT=3006 \
   -e LOG_LEVEL=INFO \
   -e OLLAMA_MODEL=deepseek-coder \
   hydra-ai-engine:latest
@@ -165,7 +165,7 @@ docker run -d -p 3002:3002 --name hydra-ai-engine \
   - Response: `{"response": "AI generated response"}`
   - Example:
     ```bash
-    curl -X POST http://localhost:3002/chat \
+    curl -X POST http://localhost:3006/chat \
       -H "Content-Type: application/json" \
       -d '{"prompt": "Write a hello world program in Python"}'
     ```
@@ -177,7 +177,7 @@ The AI Engine integrates with the Hydra Backend through the `AiEngineService`. T
 
 ```properties
 # Backend application.properties
-ai-engine.url=http://localhost:3002
+ai-engine.url=http://localhost:3006
 ai-engine.timeout=30000
 ```
 
@@ -189,13 +189,13 @@ Add the following to your backend properties files:
 - `application-prod.properties`
 
 ```properties
-ai-engine.url=http://localhost:3002
+ai-engine.url=http://localhost:3006
 ai-engine.timeout=30000
 ```
 
 For production, update the URL to match your deployment:
 ```properties
-ai-engine.url=http://ai-engine-service:3002
+ai-engine.url=http://ai-engine-service:3006
 ai-engine.timeout=30000
 ```
 
@@ -301,7 +301,7 @@ ollama pull deepseek-coder
 ### Port Already in Use
 Change the port using environment variable:
 ```bash
-PORT=3003 npm start
+PORT=3007 npm start
 ```
 
 ## License

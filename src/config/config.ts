@@ -5,7 +5,14 @@
 
 import dotenv from 'dotenv';
 
+// Load base .env file first
 dotenv.config();
+
+// Load environment-specific .env file if it exists (e.g., .env.production, .env.qa)
+// This allows environment-specific values to override base .env values
+const env = (process.env.NODE_ENV || process.env.FLASK_ENV || 'development').toLowerCase();
+const envFile = `.env.${env}`;
+dotenv.config({ path: envFile, override: true }); // override: true allows env-specific to override base
 
 export interface Config {
   APP_NAME: string;
@@ -28,7 +35,7 @@ class BaseConfig implements Config {
   APP_NAME = 'Hydra AI Engine';
   APP_VERSION = '1.0.0';
   HOST = process.env.HOST || '0.0.0.0';
-  PORT = parseInt(process.env.PORT || '3002', 10);
+  PORT = parseInt(process.env.PORT || '3006', 10);
   DEBUG = process.env.DEBUG === 'true';
   LOG_LEVEL = process.env.LOG_LEVEL || 'INFO';
   CORS_ORIGINS = (process.env.CORS_ORIGINS || 'http://*.qotsystems.co.za').split(',');
