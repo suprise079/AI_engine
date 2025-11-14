@@ -4,6 +4,18 @@
 
 import * as logger from '../config/logger';
 
+interface OllamaGenerateResponse {
+  response: string;
+  done?: boolean;
+  context?: number[];
+  total_duration?: number;
+  load_duration?: number;
+  prompt_eval_count?: number;
+  prompt_eval_duration?: number;
+  eval_count?: number;
+  eval_duration?: number;
+}
+
 export class OllamaService {
   private ollamaUrl: string;
   private modelName: string;
@@ -46,7 +58,7 @@ export class OllamaService {
         throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as OllamaGenerateResponse;
       const responseText = data.response || '';
       
       logger.default.info(`Ollama response received (${responseText.length} chars)`);
