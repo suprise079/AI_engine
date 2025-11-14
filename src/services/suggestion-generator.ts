@@ -21,7 +21,7 @@ export class SuggestionGenerator {
 
   constructor(_learningMode: boolean = true) {
     // learningMode reserved for future use
-    this.ollamaService = new OllamaService(config.OLLAMA_MODEL, config.OLLAMA_TIMEOUT);
+    this.ollamaService = new OllamaService(config.OLLAMA_URL, config.OLLAMA_MODEL, config.OLLAMA_TIMEOUT);
   }
 
   async generateSuggestions(actionSequence: ActionSequence): Promise<TestSuggestionModel[]> {

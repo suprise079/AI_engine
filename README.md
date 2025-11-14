@@ -61,6 +61,7 @@ The application uses environment-based configuration. You can configure the serv
 - `CORS_CREDENTIALS`: Enable CORS credentials - Default: `true`
 - `MAX_CONTENT_LENGTH`: Maximum request size in bytes - Default: `16777216` (16MB)
 - `REQUEST_TIMEOUT`: Request timeout in seconds - Default: `200` (200 seconds)
+- `OLLAMA_URL`: Ollama HTTP API URL - Default: `http://localhost:11434`
 - `OLLAMA_MODEL`: Ollama model name - Default: `deepseek-coder`
 - `OLLAMA_TIMEOUT`: Ollama query timeout in milliseconds - Default: `60000` (60 seconds)
 
@@ -74,6 +75,7 @@ DEBUG=false
 LOG_LEVEL=INFO
 CORS_ORIGINS=http://localhost:3000,http://localhost:8080
 CORS_CREDENTIALS=true
+OLLAMA_URL=http://localhost:11434
 OLLAMA_MODEL=deepseek-coder
 OLLAMA_TIMEOUT=60000
 ```
@@ -115,11 +117,12 @@ docker run -d -p 3006:3006 --name hydra-ai-engine \
   -e NODE_ENV=production \
   -e PORT=3006 \
   -e LOG_LEVEL=INFO \
+  -e OLLAMA_URL=http://host.docker.internal:11434 \
   -e OLLAMA_MODEL=deepseek-coder \
   hydra-ai-engine:latest
 ```
 
-**Note**: The Docker container assumes Ollama is available on the host machine or in a linked container. For production deployments, you may need to configure Ollama separately.
+**Note**: The Docker container connects to Ollama via HTTP API. Ollama should be running separately (either on the host machine or in another container). Set the `OLLAMA_URL` environment variable to point to your Ollama instance (e.g., `http://ollama:11434` for a container named "ollama", or `http://host.docker.internal:11434` to access Ollama on the host).
 
 ## API Endpoints
 

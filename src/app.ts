@@ -50,7 +50,7 @@ const suggestionGenerator = new SuggestionGenerator();
 const componentRecognizer = new ComponentRecognizer();
 const testCaseGenerator = new TestCaseGenerator();
 const testScriptGenerator = new TestScriptGenerator();
-const ollamaService = new OllamaService();
+const ollamaService = new OllamaService(config.OLLAMA_URL, config.OLLAMA_MODEL, config.OLLAMA_TIMEOUT);
 
 // Helper function to validate timestamps
 function validateTimestamp(action: Action): Action {
