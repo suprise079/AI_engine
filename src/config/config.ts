@@ -36,7 +36,7 @@ class BaseConfig implements Config {
   APP_NAME = 'Hydra AI Engine';
   APP_VERSION = '1.0.0';
   HOST = process.env.HOST || '0.0.0.0';
-  PORT = parseInt(process.env.PORT || '3006', 10);
+  PORT = parseInt(process.env.PORT || '3007', 10);
   DEBUG = process.env.DEBUG === 'true';
   LOG_LEVEL = process.env.LOG_LEVEL || 'INFO';
   CORS_ORIGINS = (process.env.CORS_ORIGINS || 'http://*.qotsystems.co.za').split(',');
