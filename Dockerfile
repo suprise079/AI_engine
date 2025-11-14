@@ -30,9 +30,9 @@ RUN npx tsc
 ENV NODE_ENV=production
 RUN npm prune --omit=dev
 
-# Create non-root user for security
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
+# Create non-root user for security (Debian syntax)
+RUN groupadd -r -g 1001 nodejs && \
+    useradd -r -u 1001 -g nodejs nodejs
 
 # Change ownership
 RUN chown -R nodejs:nodejs /app
