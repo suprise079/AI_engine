@@ -16,14 +16,18 @@ RUN apt-get update && apt-get install -y \
 # Copy package files
 COPY package*.json ./
 
-# Install Node.js dependencies
-RUN npm ci --only=production
+# Install all Node.js dependencies (including dev dependencies for build)
+# Using npm install instead of npm ci since package-lock.json may not exist
+RUN npm install
 
 # Copy application code
 COPY . .
 
 # Build TypeScript
 RUN npm run build
+
+# Remove dev dependencies to reduce image size (optional but recommended)
+RUN npm prune --omit=dev
 
 # Create non-root user for security
 RUN useradd -m -u 1000 appuser && \
