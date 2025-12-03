@@ -1,95 +1,104 @@
 /**
- * Ollama Service for interacting with Llama model via Ollama CLI
+ * Ollama Service for interacting with a running Ollama server via HTTP
  */
 
-import { spawn } from 'child_process';
-import * as logger from '../config/logger';
+import logger from '../config/logger';
+
+const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://127.0.0.1:11434';
+
+interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
+interface ChatRequest {
+  model: string;
+  messages: ChatMessage[];
+  stream?: boolean;
+}
+
+interface ChatResponse {
+  message: {
+    role: string;
+    content: string;
+  };
+}
 
 export class OllamaService {
-  private modelName: string;
-  private timeout: number;
+  private readonly modelName: string;
+  private readonly timeout: number;
+  private readonly baseUrl: string;
 
   constructor(modelName: string = 'llama3.1', timeout: number = 60000) {
     this.modelName = modelName;
     this.timeout = timeout;
+    this.baseUrl = OLLAMA_HOST.replace(/\/$/, '');
   }
 
   /**
-   * Query Ollama with a prompt and return the response
+   * Query Ollama with a prompt and return the response.
+   * Assumes `ollama serve` is already running and the model is pulled.
    */
   async query(prompt: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-      logger.default.info(`Querying Ollama with model: ${this.modelName}`);
+    logger.info(`Querying Ollama with model: ${this.modelName}`);
+
+    const requestBody: ChatRequest = {
+      model: this.modelName,
+      messages: [{ role: 'user', content: prompt }],
+      stream: false
+    };
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
+      const response = await fetch(`${this.baseUrl}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => response.statusText);
+        logger.error(`Ollama HTTP error ${response.status}: ${errorText}`);
+        throw new Error(`Ollama HTTP error ${response.status}: ${errorText}`);
+      }
+
+      const data = await response.json() as ChatResponse;
+      const content = data.message?.content || '';
       
-      const ollama = spawn('ollama', ['run', this.modelName]);
-      let output = '';
-      let errorOutput = '';
-
-      // Set timeout
-      const timeoutId = setTimeout(() => {
-        ollama.kill();
-        reject(new Error(`Ollama query timeout after ${this.timeout}ms`));
-      }, this.timeout);
-
-      // Write prompt to stdin
-      ollama.stdin.write(prompt + '\n');
-      ollama.stdin.end();
-
-      // Collect stdout
-      ollama.stdout.on('data', (data: Buffer) => {
-        output += data.toString();
-      });
-
-      // Collect stderr
-      ollama.stderr.on('data', (data: Buffer) => {
-        errorOutput += data.toString();
-      });
-
-      // Handle process completion
-      ollama.on('close', (code: number) => {
-        clearTimeout(timeoutId);
-        
-        if (code !== 0) {
-          logger.default.error(`Ollama process exited with code ${code}: ${errorOutput}`);
-          reject(new Error(`Ollama process failed: ${errorOutput || 'Unknown error'}`));
-          return;
-        }
-
-        const trimmedOutput = output.trim();
-        logger.default.info(`Ollama response received (${trimmedOutput.length} chars)`);
-        resolve(trimmedOutput);
-      });
-
-      // Handle process errors
-      ollama.on('error', (error: Error) => {
-        clearTimeout(timeoutId);
-        logger.default.error(`Ollama spawn error: ${error.message}`);
-        reject(new Error(`Failed to spawn Ollama process: ${error.message}`));
-      });
-    });
+      logger.info(`Ollama response received (${content.length} chars)`);
+      return content.trim();
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        logger.error(`Ollama query timeout after ${this.timeout}ms`);
+        throw new Error(`Ollama query timeout after ${this.timeout}ms`);
+      }
+      logger.error(`Ollama request failed: ${error.message}`, { error });
+      throw error;
+    }
   }
 
   /**
-   * Check if Ollama is available
+   * Check if Ollama server is available
    */
   async isAvailable(): Promise<boolean> {
-    return new Promise((resolve) => {
-      const check = spawn('ollama', ['--version']);
-      
-      check.on('close', (code) => {
-        resolve(code === 0);
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch(`${this.baseUrl}/api/tags`, {
+        method: 'GET',
+        signal: controller.signal
       });
 
-      check.on('error', () => {
-        resolve(false);
-      });
-
-      // Timeout after 5 seconds
-      setTimeout(() => {
-        check.kill();
-        resolve(false);
-      }, 5000);
-    });
+      clearTimeout(timeoutId);
+      return response.ok;
+    } catch {
+      return false;
+    }
   }
 }
-
