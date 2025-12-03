@@ -29,7 +29,7 @@ RUN npm install
 COPY . .
 
 # Build TypeScript
-RUN npm build
+RUN npm run build
 
 # Remove dev dependencies to reduce image size (optional, but keeps image cleaner)
 RUN npm prune --production
