@@ -35,8 +35,8 @@ ENV NODE_ENV=production
 RUN npm prune --production
 
 # Create non-root user for security
-RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
 
 # Copy Ollama models from root to appuser's directory so appuser can access them
 RUN mkdir -p /home/appuser/.ollama && \
