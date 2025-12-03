@@ -25,6 +25,9 @@ COPY package*.json ./
 # Install all Node.js dependencies (including dev dependencies needed for build)
 RUN npm install
 
+# Install TypeScript compiler
+RUN npm install typescript
+
 # Copy application code
 COPY . .
 
