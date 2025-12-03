@@ -26,7 +26,7 @@ COPY package*.json ./
 RUN npm install
 
 # Install TypeScript compiler
-RUN npm install typescript
+RUN npm install -g typescript
 
 # Copy application code
 COPY . .
