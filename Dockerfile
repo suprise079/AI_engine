@@ -8,10 +8,16 @@ WORKDIR /app
 ENV NODE_ENV=production \
     PORT=3002
 
-# Install system dependencies (Ollama will be installed separately or assumed available on host)
+# Install system dependencies and Ollama
 RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Ollama
+RUN curl -fsSL https://ollama.com/install.sh | sh
+
+# Pull llama3.1 model (this happens as root, models stored in /root/.ollama/models)
+RUN ollama pull llama3.1
 
 # Copy package files
 COPY package*.json ./
@@ -28,6 +34,11 @@ RUN npm run build
 # Create non-root user for security
 RUN useradd -m -u 1000 appuser && \
     chown -R appuser:appuser /app
+
+# Copy Ollama models from root to appuser's directory so appuser can access them
+RUN mkdir -p /home/appuser/.ollama && \
+    cp -r /root/.ollama/* /home/appuser/.ollama/ && \
+    chown -R appuser:appuser /home/appuser/.ollama
 
 # Switch to non-root user
 USER appuser
