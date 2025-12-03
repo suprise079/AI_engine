@@ -19,13 +19,12 @@ for i in {1..30}; do
   sleep 1
 done
 
-# Check if model exists, pull if not
+# Check if model exists, but don't pull - let Ollama handle it on first use
 echo "[entrypoint] Checking for llama3.1 model..."
-if ! ollama list 2>/dev/null | grep -q "llama3.1"; then
-  echo "[entrypoint] Pulling llama3.1 model..."
-  ollama pull llama3.1
-else
+if ollama list 2>/dev/null | grep -q "llama3.1"; then
   echo "[entrypoint] llama3.1 model already exists"
+else
+  echo "[entrypoint] llama3.1 model not found - will be pulled automatically on first use"
 fi
 
 echo "[entrypoint] Starting Node server..."
