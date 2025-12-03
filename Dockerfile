@@ -15,9 +15,6 @@ RUN apt-get update && apt-get install -y \
 # Install Ollama
 RUN curl -fsSL https://ollama.com/install.sh | sh
 
-# Pull llama3.1 model (this happens as root, models stored in /root/.ollama/models)
-RUN ollama pull llama3.1
-
 # Copy package files
 COPY package*.json ./
 
@@ -34,7 +31,9 @@ RUN npm run build
 ENV NODE_ENV=production
 RUN npm prune --production
 
-
+# Add entrypoint script (will manage Ollama + Node startup)
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
 
 # Expose port
 EXPOSE 3006
@@ -43,5 +42,5 @@ EXPOSE 3006
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3006/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" || exit 1
 
-# Run the application
-CMD ["node", "dist/server.js"]
+# Run the application via entrypoint
+CMD ["./docker-entrypoint.sh"]
