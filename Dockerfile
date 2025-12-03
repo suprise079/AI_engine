@@ -39,12 +39,12 @@ RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
 # Copy Ollama models from root to appuser's directory so appuser can access them
-RUN mkdir -p /home/appuser/.ollama && \
-    cp -r /root/.ollama/* /home/appuser/.ollama/ && \
-    chown -R appuser:appuser /home/appuser/.ollama
+RUN mkdir -p /home/nodejs/.ollama && \
+    cp -r /root/.ollama/* /home/nodejs/.ollama/ && \
+    chown -R nodejs:nodejs /home/nodejs/.ollama
 
 # Switch to non-root user
-USER appuser
+USER nodejs
 
 # Expose port
 EXPOSE 3002
