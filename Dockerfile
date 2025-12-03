@@ -4,8 +4,8 @@ FROM node:18-slim
 # Set working directory
 WORKDIR /app
 
-# Set environment variables (don't set NODE_ENV=production yet, we need dev deps for build)
-ENV PORT=3002
+# Set environment variables 
+ENV PORT=3006
 
 # Install system dependencies and Ollama
 RUN apt-get update && apt-get install -y \
@@ -37,7 +37,7 @@ RUN npm prune --production
 
 
 # Expose port
-EXPOSE 3002
+EXPOSE 3006
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
