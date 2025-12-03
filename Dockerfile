@@ -28,8 +28,8 @@ RUN npm install
 # Copy application code
 COPY . .
 
-# Build TypeScript (use npx to ensure local tsc is found)
-RUN npx tsc
+# Build TypeScript
+RUN npm build
 
 # Remove dev dependencies to reduce image size (optional, but keeps image cleaner)
 RUN npm prune --production
