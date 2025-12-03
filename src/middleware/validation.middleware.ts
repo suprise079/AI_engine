@@ -3,7 +3,6 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { Action } from '../types';
 
 /**
  * Validates that request body contains actions array
@@ -12,10 +11,11 @@ export const validateActionsRequest = (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
+): void => {
   const data = req.body;
   if (!data || !data.actions || !Array.isArray(data.actions) || data.actions.length === 0) {
-    return res.status(400).json({ error: 'Invalid request. Actions data is required.' });
+    res.status(400).json({ error: 'Invalid request. Actions data is required.' });
+    return;
   }
   next();
 };
@@ -27,10 +27,11 @@ export const validatePagesRequest = (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
+): void => {
   const data = req.body;
   if (!data || !data.pages) {
-    return res.status(400).json({ error: 'Invalid request. Pages data is required.' });
+    res.status(400).json({ error: 'Invalid request. Pages data is required.' });
+    return;
   }
   next();
 };
@@ -42,10 +43,11 @@ export const validateTestCaseRequest = (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
+): void => {
   const data = req.body;
   if (!data || !data.testCase) {
-    return res.status(400).json({ error: 'Invalid request. Test case data is required.' });
+    res.status(400).json({ error: 'Invalid request. Test case data is required.' });
+    return;
   }
   next();
 };
@@ -57,12 +59,13 @@ export const validateChatRequest = (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
+): void => {
   const { prompt } = req.body;
   if (!prompt || typeof prompt !== 'string') {
-    return res.status(400).json({ 
+    res.status(400).json({ 
       error: 'Invalid request. Prompt is required and must be a string.' 
     });
+    return;
   }
   next();
 };
