@@ -20,7 +20,7 @@ export class OllamaServerManager {
       return new Promise((resolve) => {
         const req = http.get(`http://${this.OLLAMA_HOST}:${this.OLLAMA_PORT}/api/tags`, (res) => {
           resolve(res.statusCode === 200);
-          logger.info(`Ollama server is running on ${this.OLLAMA_HOST}:${this.OLLAMA_PORT} and the status code is ${res.statusCode}`);
+          logger.info(`Ollama server is running on ${this.OLLAMA_HOST}:${this.OLLAMA_PORT}`);
         });
         
         req.on('error', () => {
@@ -52,30 +52,6 @@ export class OllamaServerManager {
     
     try {
       // Start Ollama server as background process
-      // pull the llama3.1 model
-      this.ollamaProcess = spawn('ollama', ['pull', 'llama3.1'], {
-        detached: false,
-        stdio: ['ignore', 'pipe', 'pipe']
-      });
-      this.ollamaProcess.stdout.on('data', (data: Buffer) => {
-        logger.debug(`Ollama: ${data.toString().trim()}`);
-      });
-      this.ollamaProcess.stderr.on('data', (data: Buffer) => {
-        logger.debug(`Ollama: ${data.toString().trim()}`);
-      });
-      this.ollamaProcess.on('error', (error: Error) => {
-        logger.error(`Failed to pull llama3.1 model: ${error.message}`);
-        throw error;
-      });
-      this.ollamaProcess.on('close', (code: number) => {
-        logger.error(`Ollama process closed with code ${code}`);
-        throw new Error(`Ollama process closed with code ${code}`);
-      });
-      
-
-      logger.info('llama3.1 model pulled successfully');
-
-      // start the ollama server
       this.ollamaProcess = spawn('ollama', ['serve'], {
         detached: false,
         stdio: ['ignore', 'pipe', 'pipe']
