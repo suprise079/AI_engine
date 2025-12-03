@@ -4,7 +4,7 @@
   "description": "A Node.js/Express TypeScript microservice that provides AI-powered capabilities for test analysis and test generation using DeepSeek via Ollama",
   "main": "dist/app.js",
   "scripts": {
-    "build": "tsc",
+    "build": "npx tsc",
     "start": "node dist/app.js",
     "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
     "prod": "NODE_ENV=production npm run build && npm start",
