@@ -4,9 +4,8 @@ FROM node:18-slim
 # Set working directory
 WORKDIR /app
 
-# Set environment variables
-ENV NODE_ENV=production \
-    PORT=3002
+# Set environment variables (don't set NODE_ENV=production yet, we need dev deps for build)
+ENV PORT=3002
 
 # Install system dependencies and Ollama
 RUN apt-get update && apt-get install -y \
@@ -25,16 +24,14 @@ COPY package*.json ./
 # Install all Node.js dependencies (including dev dependencies needed for build)
 RUN npm install
 
-# Install TypeScript compiler
-RUN npm install -g typescript
-
 # Copy application code
 COPY . .
 
 # Build TypeScript
 RUN npm run build
 
-# Remove dev dependencies to reduce image size (optional, but keeps image cleaner)
+# Now set NODE_ENV=production and remove dev dependencies
+ENV NODE_ENV=production
 RUN npm prune --production
 
 # Create non-root user for security
