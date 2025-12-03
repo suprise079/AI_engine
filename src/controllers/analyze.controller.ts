@@ -19,7 +19,7 @@ export const analyzeActions = async (req: Request, res: Response) => {
     // Validate and fix timestamps
     const fixedActions = data.actions.map((action: Action) => validateTimestamp(action));
 
-    // Generate suggestions using DeepSeek
+    // Generate suggestions using Llama
     const suggestions = await suggestionGenerator.generateSuggestions({
       sessionId: data.sessionId,
       actions: fixedActions

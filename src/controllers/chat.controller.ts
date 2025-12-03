@@ -15,7 +15,7 @@ export const chat = async (req: Request, res: Response) => {
 
     logger.info(`Received chat request with prompt: ${prompt}`);
 
-    // Query DeepSeek via Ollama
+    // Query Llama via Ollama
     const response = await ollamaService.query(prompt);
 
     logger.info(`Chat response generated (${response.length} chars)`);

@@ -1,7 +1,7 @@
 {
   "name": "hydra-ai-engine",
   "version": "1.0.0",
-  "description": "A Node.js/Express TypeScript microservice that provides AI-powered capabilities for test analysis and test generation using DeepSeek via Ollama",
+  "description": "A Node.js/Express TypeScript microservice that provides AI-powered capabilities for test analysis and test generation using Llama via Ollama",
   "main": "dist/server.js",
   "scripts": {
     "build": "npx tsc",
@@ -21,7 +21,7 @@
     "typescript",
     "microservice",
     "ollama",
-    "deepseek"
+    "llama"
   ],
   "author": "QOT Systems",
   "license": "UNLICENSED",

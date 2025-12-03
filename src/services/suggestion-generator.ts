@@ -1,6 +1,6 @@
 /**
- * Suggestion Generator with DeepSeek AI integration
- * Generates testing suggestions based on action sequences using DeepSeek via Ollama
+ * Suggestion Generator with Llama AI integration
+ * Generates testing suggestions based on action sequences using Llama via Ollama
  */
 
 import { TestSuggestionModel } from '../models';
@@ -33,11 +33,11 @@ export class SuggestionGenerator {
     }
 
     try {
-      // Create comprehensive prompt for DeepSeek
+      // Create comprehensive prompt for Llama
       const prompt = this.createAnalysisPrompt(actionSequence);
 
-      // Query DeepSeek via Ollama
-      logger.info('Querying DeepSeek for software issue analysis...');
+      // Query Llama via Ollama
+      logger.info('Querying Llama for software issue analysis...');
       const aiResponse = await this.ollamaService.query(prompt);
 
       // Parse AI response into suggestions

@@ -13,14 +13,21 @@ import { patternRecognizer, suggestionGenerator, componentRecognizer, testCaseGe
 export const getHealth = (_req: Request, res: Response) => {
   try {
     const componentsStatus = {
-      pattern_recognizer: patternRecognizer !== null,
+      pattern_recognizer: patternRecognizer !== null, // Intentionally null - removed as per requirements
       suggestion_generator: suggestionGenerator !== null,
       component_recognizer: componentRecognizer !== null,
       test_case_generator: testCaseGenerator !== null,
       test_script_generator: testScriptGenerator !== null
     };
 
-    const allHealthy = Object.values(componentsStatus).every(v => v !== null);
+    // Exclude pattern_recognizer from health check since it's intentionally removed
+    const activeComponents = {
+      suggestion_generator: componentsStatus.suggestion_generator,
+      component_recognizer: componentsStatus.component_recognizer,
+      test_case_generator: componentsStatus.test_case_generator,
+      test_script_generator: componentsStatus.test_script_generator
+    };
+    const allHealthy = Object.values(activeComponents).every(v => v !== null);
 
     res.status(allHealthy ? 200 : 503).json({
       status: allHealthy ? 'healthy' : 'degraded',

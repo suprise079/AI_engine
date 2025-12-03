@@ -1,5 +1,5 @@
 /**
- * Ollama Service for interacting with DeepSeek model via Ollama CLI
+ * Ollama Service for interacting with Llama model via Ollama CLI
  */
 
 import { spawn } from 'child_process';

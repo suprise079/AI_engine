@@ -1,32 +1,32 @@
 # Hydra AI Engine
 
-A Node.js/Express TypeScript microservice that provides AI-powered capabilities for test analysis and test generation using DeepSeek via Ollama. This service integrates with the Hydra Backend to provide intelligent test suggestions and automation.
+A Node.js/Express TypeScript microservice that provides AI-powered capabilities for test analysis and test generation using Llama via Ollama. This service integrates with the Hydra Backend to provide intelligent test suggestions and automation.
 
 ## Features
 
-- **Action Analysis**: Analyzes test action sequences and generates intelligent suggestions using DeepSeek AI
+- **Action Analysis**: Analyzes test action sequences and generates intelligent suggestions using Llama AI
 - **Component Detection**: Detects pages and components from action sequences
 - **Test Case Generation**: Generates test cases from detected pages and actions
 - **Test Script Generation**: Creates executable test scripts in various frameworks (Selenium, Cypress, Playwright)
 - **Feedback Processing**: Processes user feedback to improve AI models
-- **Chat API**: Direct API endpoint for testing Ollama/DeepSeek integration
+- **Chat API**: Direct API endpoint for testing Ollama/Llama integration
 
 ## Requirements
 
 - Node.js 18+ 
 - npm 9+
-- Ollama installed and running with `deepseek-coder` model
+- Ollama installed and running with `llama3.1` model
 
-### Installing Ollama and DeepSeek Model
+### Installing Ollama and Llama Model
 
 1. Install Ollama from https://ollama.ai
-2. Pull the deepseek-coder model:
+2. Pull the llama3.1 model:
    ```bash
-   ollama pull deepseek-coder
+   ollama pull llama3.1
    ```
 3. Verify installation:
    ```bash
-   ollama run deepseek-coder "Hello, test"
+   ollama run llama3.1 "Hello, test"
    ```
 
 ## Installation
@@ -53,7 +53,7 @@ The application uses environment-based configuration. You can configure the serv
 ### Environment Variables
 
 - `NODE_ENV`: Environment mode (development, production, qa) - Default: `development`
-- `PORT`: Server port - Default: `3002`
+- `PORT`: Server port - Default: `3006`
 - `HOST`: Server host - Default: `0.0.0.0`
 - `DEBUG`: Enable debug mode - Default: `false`
 - `LOG_LEVEL`: Logging level (DEBUG, INFO, WARNING, ERROR) - Default: `INFO`
@@ -61,20 +61,20 @@ The application uses environment-based configuration. You can configure the serv
 - `CORS_CREDENTIALS`: Enable CORS credentials - Default: `true`
 - `MAX_CONTENT_LENGTH`: Maximum request size in bytes - Default: `16777216` (16MB)
 - `REQUEST_TIMEOUT`: Request timeout in seconds - Default: `200` (200 seconds)
-- `OLLAMA_MODEL`: Ollama model name - Default: `deepseek-coder`
+- `OLLAMA_MODEL`: Ollama model name - Default: `llama3.1`
 - `OLLAMA_TIMEOUT`: Ollama query timeout in milliseconds - Default: `60000` (60 seconds)
 
 ### Example .env file
 
 ```env
 NODE_ENV=development
-PORT=3002
+PORT=3006
 HOST=0.0.0.0
 DEBUG=false
 LOG_LEVEL=INFO
 CORS_ORIGINS=http://localhost:3000,http://localhost:8080
 CORS_CREDENTIALS=true
-OLLAMA_MODEL=deepseek-coder
+OLLAMA_MODEL=llama3.1
 OLLAMA_TIMEOUT=60000
 ```
 
@@ -111,11 +111,11 @@ docker build -t hydra-ai-engine:latest .
 ### Run Docker Container
 
 ```bash
-docker run -d -p 3002:3002 --name hydra-ai-engine \
+docker run -d -p 3006:3006 --name hydra-ai-engine \
   -e NODE_ENV=production \
-  -e PORT=3002 \
+  -e PORT=3006 \
   -e LOG_LEVEL=INFO \
-  -e OLLAMA_MODEL=deepseek-coder \
+  -e OLLAMA_MODEL=llama3.1 \
   hydra-ai-engine:latest
 ```
 
@@ -130,7 +130,7 @@ docker run -d -p 3002:3002 --name hydra-ai-engine \
 
 ### Action Analysis
 - **POST** `/analyze`
-  - Analyzes a sequence of test actions and generates suggestions using DeepSeek AI
+  - Analyzes a sequence of test actions and generates suggestions using Llama AI
   - Request body: `{"sessionId": 123, "actions": [...]}`
   - Response: `{"sessionId": 123, "suggestions": [...]}`
 
@@ -160,12 +160,12 @@ docker run -d -p 3002:3002 --name hydra-ai-engine \
 
 ### Chat API (Testing)
 - **POST** `/chat`
-  - Direct endpoint for testing Ollama/DeepSeek integration
+  - Direct endpoint for testing Ollama/Llama integration
   - Request body: `{"prompt": "Your question or prompt here"}`
   - Response: `{"response": "AI generated response"}`
   - Example:
     ```bash
-    curl -X POST http://localhost:3002/chat \
+    curl -X POST http://localhost:3006/chat \
       -H "Content-Type: application/json" \
       -d '{"prompt": "Write a hello world program in Python"}'
     ```
@@ -177,7 +177,7 @@ The AI Engine integrates with the Hydra Backend through the `AiEngineService`. T
 
 ```properties
 # Backend application.properties
-ai-engine.url=http://localhost:3002
+ai-engine.url=http://localhost:3006
 ai-engine.timeout=30000
 ```
 
@@ -189,13 +189,13 @@ Add the following to your backend properties files:
 - `application-prod.properties`
 
 ```properties
-ai-engine.url=http://localhost:3002
+ai-engine.url=http://localhost:3006
 ai-engine.timeout=30000
 ```
 
 For production, update the URL to match your deployment:
 ```properties
-ai-engine.url=http://ai-engine-service:3002
+ai-engine.url=http://ai-engine-service:3006
 ai-engine.timeout=30000
 ```
 
@@ -211,7 +211,7 @@ ai_engine/
 │   ├── models/
 │   │   └── index.ts                # Data models
 │   ├── services/
-│   │   ├── ollama-service.ts       # Ollama/DeepSeek integration
+│   │   ├── ollama-service.ts       # Ollama/Llama integration
 │   │   ├── suggestion-generator.ts # AI-powered suggestion generation
 │   │   ├── component-recognizer.ts # Component detection
 │   │   ├── test-case-generator.ts  # Test case generation
@@ -273,7 +273,7 @@ npm run format
 
 ## AI Model Integration
 
-The service uses DeepSeek Coder via Ollama for intelligent analysis. The AI analyzes action sequences and identifies:
+The service uses Llama 3.1 via Ollama for intelligent analysis. The AI analyzes action sequences and identifies:
 
 - Security vulnerabilities
 - Performance issues
@@ -293,9 +293,9 @@ If you get errors about Ollama not being found:
 3. Check that the model is pulled: `ollama list`
 
 ### Model Not Available
-If DeepSeek model is not available:
+If Llama model is not available:
 ```bash
-ollama pull deepseek-coder
+ollama pull llama3.1
 ```
 
 ### Port Already in Use
