@@ -34,17 +34,7 @@ RUN npm run build
 ENV NODE_ENV=production
 RUN npm prune --production
 
-# Create non-root user for security
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
 
-# Copy Ollama models from root to appuser's directory so appuser can access them
-RUN mkdir -p /home/nodejs/.ollama && \
-    cp -r /root/.ollama/* /home/nodejs/.ollama/ && \
-    chown -R nodejs:nodejs /home/nodejs/.ollama
-
-# Switch to non-root user
-USER nodejs
 
 # Expose port
 EXPOSE 3002
