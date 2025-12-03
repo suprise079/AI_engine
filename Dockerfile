@@ -22,14 +22,17 @@ RUN ollama pull llama3.1
 # Copy package files
 COPY package*.json ./
 
-# Install Node.js dependencies
-RUN npm install --omit=dev
+# Install all Node.js dependencies (including dev dependencies needed for build)
+RUN npm install
 
 # Copy application code
 COPY . .
 
 # Build TypeScript
 RUN npm run build
+
+# Remove dev dependencies to reduce image size (optional, but keeps image cleaner)
+RUN npm prune --production
 
 # Create non-root user for security
 RUN useradd -m -u 1000 appuser && \
