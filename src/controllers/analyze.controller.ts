@@ -9,6 +9,7 @@ import { suggestionGenerator } from '../services';
 import { validateTimestamp } from '../utils/timestamp-validator';
 import { OllamaService } from '../services/ollama-service';
 import { config } from '../config/config';
+import { createBugReasoningPrompt } from '../services/analyzer-service';
 
 /**
  * Analyze actions endpoint handler

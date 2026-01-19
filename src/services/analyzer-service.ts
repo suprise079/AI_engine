@@ -1,9 +1,8 @@
 
-
 /**
  * Create prompt for bug reasoning analysis
  */
-function createBugReasoningPrompt(
+export function createBugReasoningPrompt(
     bugResult: any,
     observations: any,
     actionContext?: any
