@@ -15,6 +15,7 @@ export interface Action {
   actionTime?: string;
   description?: string;
   elementValue?: string;
+  observations?: string; // JSON string of observations: {ui, network, consoleErrors, timing}
 }
 
 export interface ActionSequence {

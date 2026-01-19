@@ -75,10 +75,16 @@ export class SuggestionGenerator {
       .filter((v, i, arr) => v && arr.indexOf(v) === i)
       .slice(0, 10);
 
-    return `You are a software testing expert analyzing a test session. Analyze the following action sequence and identify ALL possible software issues, testing gaps, and improvement opportunities.
+    // Extract observations summary
+    const observationsSummary = this.summarizeObservations(actionSequence.actions);
+
+    return `You are a software testing expert analyzing a test session with detailed observations. Analyze the following action sequence and identify ALL possible software issues, testing gaps, and improvement opportunities.
 
 ACTION SEQUENCE SUMMARY:
 ${actionsSummary}
+
+OBSERVATIONS DATA:
+${observationsSummary}
 
 UNIQUE PAGES VISITED: ${uniquePages.join(', ') || 'N/A'}
 
@@ -91,11 +97,12 @@ Analyze this sequence comprehensively for:
 6. VALIDATION gaps (missing client-side validation, insufficient server-side validation, format checks)
 7. ERROR HANDLING issues (unclear error messages, missing error recovery, unhandled exceptions)
 8. DATA INTEGRITY concerns (data persistence, transaction handling, concurrent access, data corruption)
+9. BUGS DETECTED FROM OBSERVATIONS (network errors, console errors, UI changes, timing issues)
 
 For each issue found, provide:
 - Title: Short, descriptive title
 - Description: Detailed explanation of the issue
-- Type: One of SECURITY, PERFORMANCE, ACCESSIBILITY, USABILITY, EDGE_CASE, VALIDATION, ERROR_HANDLING, DATA_INTEGRITY, or OTHER
+- Type: One of SECURITY, PERFORMANCE, ACCESSIBILITY, USABILITY, EDGE_CASE, VALIDATION, ERROR_HANDLING, DATA_INTEGRITY, BUG, or OTHER
 - Priority: HIGH, MEDIUM, or LOW
 - Suggested Action: Specific testing action to verify or address the issue
 
@@ -104,13 +111,13 @@ Format your response as a JSON array of objects with these exact fields:
   {
     "title": "Issue title",
     "description": "Detailed description",
-    "suggestionType": "SECURITY|PERFORMANCE|ACCESSIBILITY|USABILITY|EDGE_CASE|VALIDATION|ERROR_HANDLING|DATA_INTEGRITY|OTHER",
+    "suggestionType": "SECURITY|PERFORMANCE|ACCESSIBILITY|USABILITY|EDGE_CASE|VALIDATION|ERROR_HANDLING|DATA_INTEGRITY|BUG|OTHER",
     "priority": "HIGH|MEDIUM|LOW",
     "suggestedAction": "Specific action to take"
   }
 ]
 
-Provide 5-15 suggestions covering different aspects. Focus on actionable, testable issues.`;
+Provide 5-15 suggestions covering different aspects. Focus on actionable, testable issues. Pay special attention to the observations data which contains real-time evidence of bugs (network errors, console errors, UI issues, performance problems).`;
   }
 
   private summarizeActions(actions: Array<{ actionType: string; url?: string; pageTitle?: string; elementSelector?: string; inputData?: string }>): string {
@@ -148,6 +155,68 @@ Provide 5-15 suggestions covering different aspects. Focus on actionable, testab
 
     if (inputFields.length > 0) {
       summary += `Input fields used: ${inputFields.length}\n`;
+    }
+
+    return summary;
+  }
+
+  private summarizeObservations(actions: Array<{ sequenceNumber?: number; actionType: string; observations?: string }>): string {
+    const observations: string[] = [];
+    let networkErrors = 0;
+    let consoleErrors = 0;
+    let slowActions = 0;
+    let noUIChangeActions = 0;
+
+    for (const action of actions) {
+      if (action.observations) {
+        try {
+          const obs = JSON.parse(action.observations);
+          
+          // Count network errors
+          if (obs.network && Array.isArray(obs.network)) {
+            const errors = obs.network.filter((n: any) => n.error || (n.status >= 400));
+            networkErrors += errors.length;
+            if (errors.length > 0) {
+              observations.push(`Action ${action.sequenceNumber || '?'} (${action.actionType}): ${errors.length} network error(s) - ${errors.map((e: any) => `${e.method} ${e.url} (${e.status || 'failed'})`).join(', ')}`);
+            }
+          }
+
+          // Count console errors
+          if (obs.consoleErrors && Array.isArray(obs.consoleErrors)) {
+            consoleErrors += obs.consoleErrors.length;
+            if (obs.consoleErrors.length > 0) {
+              observations.push(`Action ${action.sequenceNumber || '?'} (${action.actionType}): ${obs.consoleErrors.length} console error(s) - ${obs.consoleErrors.map((e: any) => e.message).slice(0, 3).join('; ')}`);
+            }
+          }
+
+          // Check for slow actions
+          if (obs.timing && obs.timing.actionDurationMs && obs.timing.actionDurationMs > 3000) {
+            slowActions++;
+            observations.push(`Action ${action.sequenceNumber || '?'} (${action.actionType}): Slow response (${obs.timing.actionDurationMs}ms)`);
+          }
+
+          // Check for no UI change
+          if (obs.ui && obs.ui.pageChanged === false && action.actionType !== 'TYPE') {
+            noUIChangeActions++;
+            observations.push(`Action ${action.sequenceNumber || '?'} (${action.actionType}): No UI change detected after action`);
+          }
+        } catch (e) {
+          // Invalid JSON, skip
+        }
+      }
+    }
+
+    let summary = `Total observations analyzed: ${actions.filter(a => a.observations).length} actions\n`;
+    if (networkErrors > 0) summary += `Network errors detected: ${networkErrors}\n`;
+    if (consoleErrors > 0) summary += `Console errors detected: ${consoleErrors}\n`;
+    if (slowActions > 0) summary += `Slow actions (>3s): ${slowActions}\n`;
+    if (noUIChangeActions > 0) summary += `Actions with no UI change: ${noUIChangeActions}\n`;
+    
+    if (observations.length > 0) {
+      summary += `\nDetailed observations:\n${observations.slice(0, 20).join('\n')}`;
+      if (observations.length > 20) summary += `\n... and ${observations.length - 20} more`;
+    } else {
+      summary += `No significant issues detected in observations.`;
     }
 
     return summary;
