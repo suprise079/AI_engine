@@ -11,7 +11,7 @@ export function createBugReasoningPrompt(
       ? observations 
       : JSON.stringify(observations, null, 2);
   
-    return `You are a QA expert analyzing a potential bug detected during automated testing.
+    return `You are a QA expert analyzing a potential bug detected during manual testing.
   
   BUG DETECTION RESULT:
   - Type: ${bugResult.type || 'UNKNOWN'}

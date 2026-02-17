@@ -21,6 +21,11 @@ export interface Action {
 export interface ActionSequence {
   sessionId: number | string;
   actions: Action[];
+  tenantId?: number;
+  projectId?: number;
+  appId?: number;
+  env?: string;
+  pageUrl?: string;
 }
 
 export interface TestSuggestion {

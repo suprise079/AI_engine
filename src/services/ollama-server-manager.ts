@@ -5,6 +5,7 @@
 import { spawn } from 'child_process';
 import * as http from 'http';
 import logger from '../config/logger';
+import {config} from '../config/config';
 
 export class OllamaServerManager {
   private ollamaProcess: any = null;
@@ -52,7 +53,7 @@ export class OllamaServerManager {
     
     try {
       // Start Ollama server as background process
-      this.ollamaProcess = spawn('ollama', ['serve'], {
+      this.ollamaProcess = spawn('ollama', ['serve', config.OLLAMA_MODEL], {
         detached: false,
         stdio: ['ignore', 'pipe', 'pipe']
       });

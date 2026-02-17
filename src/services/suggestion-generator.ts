@@ -5,12 +5,12 @@
 
 import { TestSuggestionModel } from '../models';
 import { ActionSequence } from '../types';
-import { OllamaService } from './ollama-service';
+import type { LlmRouter } from './llm/llm-router';
+import { composePrompt } from './prompt-composer';
 import logger from '../config/logger';
-import { config } from '../config/config';
 
 export class SuggestionGenerator {
-  private ollamaService: OllamaService;
+  private llmRouter: LlmRouter;
   private feedbackHistory: Array<{
     suggestionId: number | string;
     status: string;
@@ -19,12 +19,20 @@ export class SuggestionGenerator {
   }> = [];
   private sessionSuggestions: Record<string | number, Set<string>> = {};
 
-  constructor(_learningMode: boolean = true) {
-    // learningMode reserved for future use
-    this.ollamaService = new OllamaService(config.OLLAMA_MODEL, config.OLLAMA_TIMEOUT);
+  constructor(llmRouter: LlmRouter) {
+    this.llmRouter = llmRouter;
   }
 
-  async generateSuggestions(actionSequence: ActionSequence): Promise<TestSuggestionModel[]> {
+  async generateSuggestions(
+    actionSequence: ActionSequence,
+    options?: {
+      tenantId?: number;
+      projectId?: number;
+      appId?: number;
+      env?: string;
+      pageUrl?: string;
+    }
+  ): Promise<TestSuggestionModel[]> {
     logger.info(`Generating suggestions for session ${actionSequence.sessionId} with ${actionSequence.actions.length} actions`);
 
     const sessionId = actionSequence.sessionId;
@@ -33,12 +41,30 @@ export class SuggestionGenerator {
     }
 
     try {
-      // Create comprehensive prompt for Llama
-      const prompt = this.createAnalysisPrompt(actionSequence);
+      // Use RAG-based prompt composition if tenantId is provided, otherwise fallback to old method
+      let prompt: string;
+      if (options?.tenantId) {
+        const composition = await composePrompt({
+          sessionId: actionSequence.sessionId,
+          tenantId: options.tenantId,
+          projectId: options.projectId,
+          appId: options.appId,
+          env: options.env,
+          pageUrl: options.pageUrl,
+          intent: 'SUGGEST_NEXT_TESTS',
+          actionSequence,
+          maxTokens: 2000,
+        });
+        prompt = composition.prompt;
+        logger.info(`Used RAG prompt composition: ${composition.totalTokens} tokens, ${composition.chunksUsed} chunks`);
+      } else {
+        // Fallback to old method for backward compatibility
+        prompt = this.createAnalysisPrompt(actionSequence);
+      }
 
-      // Query Llama via Ollama
+      // Query via hybrid LLM router (Ollama first, OpenAI fallback)
       logger.info('Querying Llama for software issue analysis...');
-      const aiResponse = await this.ollamaService.query(prompt);
+      const { text: aiResponse } = await this.llmRouter.generateText(prompt);
 
       // Parse AI response into suggestions
       const suggestions = this.parseAIResponse(aiResponse, actionSequence);
@@ -144,7 +170,7 @@ Provide 5-15 suggestions covering different aspects. Focus on actionable, testab
 
     let summary = `Total actions: ${actions.length}\n`;
     summary += `Action types: ${Object.entries(actionCounts).map(([type, count]) => `${type}(${count})`).join(', ')}\n`;
-    
+
     if (pageTransitions.length > 0) {
       summary += `Pages visited: ${pageTransitions.slice(0, 5).join(', ')}${pageTransitions.length > 5 ? '...' : ''}\n`;
     }
@@ -171,7 +197,7 @@ Provide 5-15 suggestions covering different aspects. Focus on actionable, testab
       if (action.observations) {
         try {
           const obs = JSON.parse(action.observations);
-          
+
           // Count network errors
           if (obs.network && Array.isArray(obs.network)) {
             const errors = obs.network.filter((n: any) => n.error || (n.status >= 400));
@@ -211,7 +237,7 @@ Provide 5-15 suggestions covering different aspects. Focus on actionable, testab
     if (consoleErrors > 0) summary += `Console errors detected: ${consoleErrors}\n`;
     if (slowActions > 0) summary += `Slow actions (>3s): ${slowActions}\n`;
     if (noUIChangeActions > 0) summary += `Actions with no UI change: ${noUIChangeActions}\n`;
-    
+
     if (observations.length > 0) {
       summary += `\nDetailed observations:\n${observations.slice(0, 20).join('\n')}`;
       if (observations.length > 20) summary += `\n... and ${observations.length - 20} more`;
@@ -239,7 +265,7 @@ Provide 5-15 suggestions covering different aspects. Focus on actionable, testab
       }
 
       const parsed = JSON.parse(jsonStr);
-      
+
       if (Array.isArray(parsed)) {
         for (const item of parsed) {
           if (item.title && item.description && item.suggestionType && item.priority) {
@@ -264,14 +290,14 @@ Provide 5-15 suggestions covering different aspects. Focus on actionable, testab
 
   private parseTextResponse(text: string): TestSuggestionModel[] {
     const suggestions: TestSuggestionModel[] = [];
-    
+
     // Try to extract suggestions from text format
     const lines = text.split('\n');
     let currentSuggestion: Partial<{ title: string; description: string; type: string; priority: string; action: string }> | null = null;
 
     for (const line of lines) {
       const trimmed = line.trim();
-      
+
       if (trimmed.match(/^\d+[\.\)]/) || trimmed.toLowerCase().includes('title:')) {
         if (currentSuggestion && currentSuggestion.title) {
           suggestions.push(this.createSuggestionFromParts(currentSuggestion));

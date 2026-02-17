@@ -7,7 +7,7 @@ import { config } from './config/config';
 import { corsMiddleware } from './middleware/cors.middleware';
 import { requestLoggingMiddleware, responseLoggingMiddleware } from './middleware/logging.middleware';
 import { errorHandlerMiddleware } from './middleware/error-handler.middleware';
-import { registerRoutes } from './routes';
+import { registerFeatureRoutes } from './features';
 
 const app = express();
 
@@ -17,8 +17,8 @@ app.use(express.json({ limit: `${config.MAX_CONTENT_LENGTH}b` }));
 app.use(requestLoggingMiddleware);
 app.use(responseLoggingMiddleware);
 
-// Register all routes
-registerRoutes(app);
+// Register all feature routes
+registerFeatureRoutes(app);
 
 // Error handler middleware (must be last)
 app.use(errorHandlerMiddleware);
